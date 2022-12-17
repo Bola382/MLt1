@@ -1,65 +1,42 @@
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 rm(list=ls())
-library(tidyverse);library(GGally)
+suppressMessages(library(tidyverse));suppressMessages(library(GGally))
 
 # loading dataset
-dataTrain = read.table("data/adult.data.txt",h=F,sep=',')
-dataTest  = read.table("data/adult.test.txt",h=F,sep=',')
+data = readxl::read_excel("data/dataR2.xlsx")
 
-# variable description
-# age: continuous.
-# workclass: factor
-# fnlwgt: continuous.
-# education: factor.
-# education-num: factor.
-# marital-status:factor.
-# ocupation: factor.
-# relationship: factor.
-# race: factor.
-# sex: factor.
-# capital-gain: continuous.
-# capital-loss: continuous.
-# hours-per-week: continuous.
-# native-country: factor.
-# indicator: factor.
-cc = c("age", "workclass","fnlwgt","education","education-num","marital-status",
-       "ocupation","relationship","race","sex","capital-gain","capital-loss",
-       "hours-per-week","native-country","indicator")
-colnames(dataTrain) = colnames(dataTest) = cc
+View(data)
 
-rm(cc)
-
-dataTrain = dataTrain %>% tibble
-dataTest = dataTest %>% tibble
-
-dataTrain = dataTrain %>% mutate(workclass=factor(workclass),education=factor(education),`education-num`=factor(`education-num`),
-                                 `marital-status`=factor(`marital-status`),ocupation=factor(ocupation),
-                                 relationship = factor(relationship),race=factor(race),sex=factor(sex),
-                                 `native-country` = factor(`native-country`),indicator=factor(indicator))
-
-dataTest = dataTest %>% mutate(workclass=factor(workclass),education=factor(education),`education-num`=factor(`education-num`),
-                                 `marital-status`=factor(`marital-status`),ocupation=factor(ocupation),
-                                 relationship = factor(relationship),race=factor(race),sex=factor(sex),
-                                 `native-country` = factor(`native-country`),indicator=factor(indicator))
+# Data Set Information:
+#  
+# There are 10 predictors, all quantitative, and a binary dependent variable, 
+# indicating the presence or absence of breast cancer. The predictors are 
+# anthropometric data and parameters which can be gathered in routine blood 
+# analysis. Prediction models based on these predictors, if accurate, 
+# can potentially be used as a biomarker of breast cancer.
 
 
-# merging train and test datasets for testing different partitions
-data = rbind(dataTrain,dataTest)
+# Attribute Information:
+#  
+# Quantitative Attributes:
+# Age (years)
+# BMI (kg/m2)
+# Glucose (mg/dL)
+# Insulin (µU/mL)
+# HOMA
+# Leptin (ng/mL)
+# Adiponectin (µg/mL)
+# Resistin (ng/mL)
+# MCP-1(pg/dL)
 
-# describing data
-aa = data %>% select(where(is.numeric)) 
-psych::describe(aa)
+# Labels:
+# 1=Healthy controls
+# 2=Patients
 
-rm(aa)
+# proportions 
+data %>% select(last_col()) %>% table %>% prop.table %>% barplot(names.arg=c("control","patient"),ylim=c(0,.8))
 
-# proportions for factors
-aa = data %>% select(workclass) %>% table %>% prop.table 
-aa = merge(aa,select(data,workclass))
+# correlations by class
+data %>% ggpairs(aes(color = Classification)) + theme_bw()
 
-aa %>% ggplot(aes(x="workclass", y=aa[,2]*100, fill=workclass)) +
- geom_bar(stat="identity", width=1) +
- coord_polar("y", start=0)
-
-
-# correlations by rings
-data %>% ggpairs(aes(color = rings),cardinality_threshold = 30) + theme_bw()
+save.image("Data.RData")
