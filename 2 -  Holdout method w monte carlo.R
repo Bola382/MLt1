@@ -5,8 +5,8 @@ suppressMessages(library(dplyr))
 
 rmnames = function(a) {names(a)=NULL;  return(a)}
 
-X = ddata %>% select(-last_col(1)) %>% as.data.frame
-Y = ddata %>% select(last_col(1)) %>% unlist %>% rmnames
+X = data %>% data.frame %>% select(-last_col()) %>% as.data.frame
+Y = data %>% data.frame %>% select(last_col())  %>% unlist %>% factor %>% rmnames
 n = nrow(X)
 m = 1000 # reps monte carlo
 
@@ -62,8 +62,8 @@ for(k in 1:m){
                 model = "naiveBayes", task = "c")
  modLDA   = fit(classe ~ ., data = dbtreino,
                 model = "lda", task = "c")
- modQDA   = fit(classe ~ ., data = dbtreino,
-                model = "qda", task = "c")
+ #modQDA   = fit(classe ~ ., data = dbtreino,
+ #               model = "qda", task = "c")
  modDT   = fit(classe ~ ., data = dbtreino,
                 model = "dt", task = "c")
  modSVM   = fit(classe ~ ., data = dbtreino,
@@ -79,7 +79,7 @@ for(k in 1:m){
  Ypred15NN = predict(mod15NN, dbteste) 
  YpredNNB  = predict(modNNB, dbteste)
  YpredLDA  = predict(modLDA, dbteste)
- YpredQDA  = predict(modQDA, dbteste)
+ #YpredQDA  = predict(modQDA, dbteste)
  YpredDT   = predict(modDT, dbteste)
  YpredSVM   = predict(modSVM, dbteste)
  YpredMULTINOM  = predict(modMULTINOM, dbteste)
@@ -91,7 +91,7 @@ for(k in 1:m){
  tx_erro[k,"15NN"] = (1 - sum(diag(prop.table(table(Yts[[k]], Ypred15NN))))) * 100
  tx_erro[k,"NNB"] = (1 - sum(diag(prop.table(table(Yts[[k]], YpredNNB))))) * 100
  tx_erro[k,"LDA"] = (1 - sum(diag(prop.table(table(Yts[[k]], YpredLDA))))) * 100
- tx_erro[k,"QDA"] = (1 - sum(diag(prop.table(table(Yts[[k]], YpredQDA))))) * 100
+ #tx_erro[k,"QDA"] = (1 - sum(diag(prop.table(table(Yts[[k]], YpredQDA))))) * 100
  tx_erro[k,"DT"] = (1 - sum(diag(prop.table(table(Yts[[k]], YpredDT))))) * 100
  tx_erro[k,"SVM"] = (1 - sum(diag(prop.table(table(Yts[[k]], YpredSVM))))) * 100
  tx_erro[k,"MULTINOM"] = (1 - sum(diag(prop.table(table(Yts[[k]], YpredMULTINOM))))) * 100
