@@ -3,40 +3,23 @@ rm(list=ls())
 suppressMessages(library(tidyverse));suppressMessages(library(GGally))
 
 # loading dataset
-data = readxl::read_excel("data/dataR2.xlsx")
-
+data = read.table("data/echocardiogram.txt",h=T,sep=",")
+colnames(data)=c("survival","still-alive","age-heart-attack","pericardial-eff",
+                 "fractional-short","epss","lvdd","wms","wmi","mult","name","group",
+                 "alive-at-1")
 View(data)
 
-# Data Set Information:
-#  
-# There are 10 predictors, all quantitative, and a binary dependent variable, 
-# indicating the presence or absence of breast cancer. The predictors are 
-# anthropometric data and parameters which can be gathered in routine blood 
-# analysis. Prediction models based on these predictors, if accurate, 
-# can potentially be used as a biomarker of breast cancer.
+data = data %>% select(-`still-alive`,-name)  
 
+id = which(data=="?",arr.ind = T)
+data[id]=NA
 
-# Attribute Information:
-#  
-# Quantitative Attributes:
-# Age (years)
-# BMI (kg/m2)
-# Glucose (mg/dL)
-# Insulin (µU/mL)
-# HOMA
-# Leptin (ng/mL)
-# Adiponectin (µg/mL)
-# Resistin (ng/mL)
-# MCP-1(pg/dL)
-
-# Labels:
-# 1=Healthy controls
-# 2=Patients
-
+data=na.omit(data)
+data = apply(data,1:2,as.numeric)
 # proportions 
 data %>% select(last_col()) %>% table %>% prop.table %>% barplot(names.arg=c("control","patient"),ylim=c(0,.8))
 
 # correlations by class
-data %>% ggpairs(aes(color = Classification)) + theme_bw()
+data %>% data.frame %>% mutate(alive.at.1=factor(alive.at.1)) %>% ggpairs(aes(color = `alive.at.1`)) + theme_bw()
 
 save.image("Data.RData")
