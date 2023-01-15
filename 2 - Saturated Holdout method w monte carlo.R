@@ -7,7 +7,7 @@ suppressMessages(library(dplyr))
 rmnames = function(a) {names(a)=NULL;  return(a)}
 
 X = data %>% select(-last_col())
-Y = data %>% select(last_col()) %>% unlist %>% rmnames
+Y = data %>% select(last_col()) %>% unlist %>% rmnames %>% factor
 n = nrow(X)
 m = 100 # reps monte carlo
 
