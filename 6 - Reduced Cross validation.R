@@ -1,5 +1,6 @@
 rm(list=ls())
 load("Data.RData")
+load("var select.RData")
 library(rminer);suppressMessages(library(dplyr))
 
 rmnames = function(a) {names(a)=NULL;  return(a)}
@@ -10,7 +11,7 @@ n  = nrow(X)                                                      # sample size
 C  = length(unique(Y))                                            # number of classes
 m  = 100                                                          # mc replicas
 
-k   = 10    # number of partitions (k=n leave one out)
+k    = 10   # number of partitions (k=n leave one out)
             # FOR LEAVE ONE OUT m MUST BE EQUAL TO ONE
             # SINCE THERE IS NO VARIABILITY IN THE ERROR RATE
 CV = rep(1:k,each=trunc(n/k),length.out=n) # partitions
@@ -56,29 +57,29 @@ for(i in 1:m){
   dbteste  = cbind.data.frame(Xts, classe = Yts)
   
   # model fit
-  mod5NN   = fit(classe ~ ., data = dbtreino,
+  mod5NN   = fit(classe ~ ., data = dbtreino[,c(58,regress[[1]])],
                  model = "knn", task = "c", k =5)
-  mod10NN   = fit(classe ~ ., data = dbtreino,
+  mod10NN   = fit(classe ~ ., data = dbtreino[,c(58,regress[[2]])],
                   model = "knn", task = "c", k =10)
-  mod15NN   = fit(classe ~ ., data = dbtreino,
+  mod15NN   = fit(classe ~ ., data = dbtreino[,c(58,regress[[3]])],
                   model = "knn", task = "c", k =15)
-  modLDA   = fit(classe ~ ., data = dbtreino,
+  modLDA   = fit(classe ~ ., data = dbtreino[,c(58,regress[[4]])],
                  model = "lda", task = "c")
-  modDT   = fit(classe ~ ., data = dbtreino,
+  modDT   = fit(classe ~ ., data = dbtreino[,c(58,regress[[5]])],
                 model = "dt", task = "c")
-  modSVM   = fit(classe ~ ., data = dbtreino,
+  modSVM   = fit(classe ~ ., data = dbtreino[,c(58,regress[[6]])],
                  model = "svm", task = "c")
-  modMULTINOM   = fit(classe ~ ., data = dbtreino,
+  modMULTINOM   = fit(classe ~ ., data = dbtreino[,c(58,regress[[7]])],
                       model = "multinom", task = "c")
   
   # predicting values
-  Ypred5NN[idCV==g]  = predict(mod5NN, dbteste)
-  Ypred10NN[idCV==g] = predict(mod10NN, dbteste)
-  Ypred15NN[idCV==g] = predict(mod15NN, dbteste)
-  YpredLDA[idCV==g]  = predict(modLDA, dbteste)
-  YpredDT[idCV==g]   = predict(modDT, dbteste)
-  YpredSVM[idCV==g]  = predict(modSVM, dbteste)
-  YpredMULTINOM[idCV==g]  = predict(modMULTINOM, dbteste)
+  Ypred5NN[idCV==g]  = predict(mod5NN, dbteste[,regress[[1]]])
+  Ypred10NN[idCV==g] = predict(mod10NN, dbteste[,regress[[2]]])
+  Ypred15NN[idCV==g] = predict(mod15NN, dbteste[,regress[[3]]])
+  YpredLDA[idCV==g]  = predict(modLDA, dbteste[,regress[[4]]])
+  YpredDT[idCV==g]   = predict(modDT, dbteste[,regress[[5]]])
+  YpredSVM[idCV==g]  = predict(modSVM, dbteste[,regress[[6]]])
+  YpredMULTINOM[idCV==g]  = predict(modMULTINOM, dbteste[,regress[[7]]])
   setTxtProgressBar(pb2, g)
  };close(pb2)
  # error rate
@@ -94,22 +95,8 @@ for(i in 1:m){
 
 print(proc.time()[3] - tm)
 
-rm(list=ls())
-load("reduced 10fold.RData")
 # mc estimate
 colMeans(tx_erro)
 apply(tx_erro, 2, FUN = sd)
 
-boxplot(tx_erro, main = paste("k =",k))
-
-
-mt = rep(methods,each=100)
-tx_erro2 = cbind.data.frame(rate=as.vector(tx_erro),Modelo=mt)
-
-ggplot(tx_erro2, aes(x=rate, color=Modelo, fill=Modelo)) +
- geom_histogram(aes(y=after_stat(density)), position="identity", alpha=0.5)+
- geom_density(alpha=0.6)+
- labs(title=paste("k =",k),x="Taxa de erro", y = "Densidade")+
- theme_classic()
-
-
+boxplot(tx_erro)

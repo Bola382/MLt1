@@ -1,5 +1,5 @@
 rm(list=ls())
-load("Data.RData")
+load("Data.RData");load("var select.RData")
 
 library(rminer)
 suppressMessages(library(dplyr))
@@ -11,7 +11,7 @@ Y = data %>% select(last_col()) %>% unlist %>% rmnames %>% factor
 n = nrow(X)
 m = 100 # reps monte carlo
 
-methods = c("5NN","10NN","15NN","NNB","LDA","DT","SVM","MULTINOM")
+methods = c("5NN","10NN","15NN","LDA","DT","SVM","MULTINOM")
 lmeth = length(methods)
 
 tx_erro = matrix(NA, m, lmeth,
@@ -45,48 +45,40 @@ pb <- txtProgressBar(min = 0,      # Minimum value of the progress bar
 tm = proc.time()[3]
 for(k in 1:m){
  # 2 - Model
-  
+ 
  dbtreino = cbind.data.frame(Xtr[[k]], classe = Ytr[[k]])
  dbteste  = cbind.data.frame(Xts[[k]], classe = Yts[[k]])
  
- mod5NN   = fit(classe ~ ., data = dbtreino,
-                 model = "knn", task = "c",k=5)
- mod10NN   = fit(classe ~ ., data = dbtreino,
-                model = "knn", task = "c",k=10)
- mod15NN   = fit(classe ~ ., data = dbtreino,
-                model = "knn", task = "c",k=15)
- modNNB   = fit(classe ~ ., data = dbtreino,
-                model = "naiveBayes", task = "c")
- modLDA   = fit(classe ~ ., data = dbtreino,
+ mod5NN   = fit(classe ~ ., data = dbtreino[,c(58,regress[[1]])],
+                model = "knn", task = "c",k=5)
+ mod10NN   = fit(classe ~ ., data = dbtreino[,c(58,regress[[2]])],
+                 model = "knn", task = "c",k=10)
+ mod15NN   = fit(classe ~ ., data = dbtreino[,c(58,regress[[3]])],
+                 model = "knn", task = "c",k=15)
+ modLDA   = fit(classe ~ ., data = dbtreino[,c(58,regress[[4]])],
                 model = "lda", task = "c")
- #modQDA   = fit(classe ~ ., data = dbtreino,
- #               model = "qda", task = "c")
- modDT   = fit(classe ~ ., data = dbtreino,
-                model = "dt", task = "c")
- modSVM   = fit(classe ~ ., data = dbtreino,
-               model = "svm", task = "c")
- modMULTINOM   = fit(classe ~ ., data = dbtreino,
-                model = "multinom", task = "c")
+ modDT   = fit(classe ~ ., data = dbtreino[,c(58,regress[[5]])],
+               model = "dt", task = "c")
+ modSVM   = fit(classe ~ ., data = dbtreino[,c(58,regress[[6]])],
+                model = "svm", task = "c")
+ modMULTINOM   = fit(classe ~ ., data = dbtreino[,c(58,regress[[7]])],
+                     model = "multinom", task = "c")
  # 3 - Avaliation
-  
- Ypred5NN   = predict(mod5NN, dbteste)
- Ypred10NN   = predict(mod10NN, dbteste)
- Ypred15NN  = predict(mod15NN, dbteste)
- YpredNNB   = predict(modNNB, dbteste)
- YpredLDA   = predict(modLDA, dbteste)
- #YpredQDA  = predict(modQDA, dbteste)
- YpredDT    = predict(modDT, dbteste)
- YpredSVM   = predict(modSVM, dbteste)
- YpredMULTINOM  = predict(modMULTINOM, dbteste)
+ 
+ Ypred5NN   = predict(mod5NN, dbteste[,regress[[1]]])
+ Ypred10NN   = predict(mod10NN, dbteste[,regress[[2]]])
+ Ypred15NN  = predict(mod15NN, dbteste[,regress[[3]]])
+ YpredLDA   = predict(modLDA, dbteste[,regress[[4]]])
+ YpredDT    = predict(modDT, dbteste[,regress[[5]]])
+ YpredSVM   = predict(modSVM, dbteste[,regress[[6]]])
+ YpredMULTINOM  = predict(modMULTINOM, dbteste[,regress[[7]]])
  
  tx_erro[k,"5NN"] = (1 - sum(diag(prop.table(table(Yts[[k]], Ypred15NN))))) * 100
  tx_erro[k,"10NN"] = (1 - sum(diag(prop.table(table(Yts[[k]], Ypred10NN))))) * 100
  tx_erro[k,"15NN"] = (1 - sum(diag(prop.table(table(Yts[[k]], Ypred15NN))))) * 100
- tx_erro[k,"NNB"] = (1 - sum(diag(prop.table(table(Yts[[k]], YpredNNB))))) * 100
  tx_erro[k,"LDA"] = (1 - sum(diag(prop.table(table(Yts[[k]], YpredLDA))))) * 100
- #tx_erro[k,"QDA"] = (1 - sum(diag(prop.table(table(Yts[[k]], YpredQDA))))) * 100
  tx_erro[k,"DT"] = (1 - sum(diag(prop.table(table(Yts[[k]], YpredDT))))) * 100
-  tx_erro[k,"SVM"] = (1 - sum(diag(prop.table(table(Yts[[k]], YpredSVM))))) * 100
+ tx_erro[k,"SVM"] = (1 - sum(diag(prop.table(table(Yts[[k]], YpredSVM))))) * 100
  tx_erro[k,"MULTINOM"] = (1 - sum(diag(prop.table(table(Yts[[k]], YpredMULTINOM))))) * 100
  setTxtProgressBar(pb, k)
 };print(proc.time()[3]-tm);beepr::beep()
@@ -96,17 +88,15 @@ for(k in 1:m){
 
 colMeans(tx_erro)
 apply(tx_erro, 2, FUN = sd)
-apply(tx_erro, 2, FUN = function(a) sd(a)/mean(a)*100)
 apply(tx_erro, 2, FUN = moments::skewness)
 
 boxplot(tx_erro)
-boxplot(tx_erro[,-4])
 
 mt = rep(methods,each=100)
 tx_erro2 = cbind.data.frame(rate=as.vector(tx_erro),Modelo=mt)
 
 ggplot(tx_erro2, aes(x=rate, color=Modelo, fill=Modelo)) +
- geom_histogram(aes(y=after_stat(density)), position="identity", alpha=0.5)+
+ #geom_histogram(aes(y=after_stat(density)), position="identity", alpha=0.5)+
  geom_density(alpha=0.6)+
  labs(title="",x="Taxa de erro", y = "Densidade")+
  theme_classic()
